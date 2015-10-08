@@ -1,5 +1,5 @@
 # function that returns the rank (best or worst) of state hospitals according
-# to moratlity rates of treated medical conditions (heart attack, heart failure, and pneumonia")
+# to moratlity rates of treated medical conditions (heart attack, heart failure, and pneumonia)
 rankall = function(outcome, num = "best") {
     # create and trim dataset for relevant variables
     data = read.csv("outcome-of-care-measures.csv", colClasses = "character")
