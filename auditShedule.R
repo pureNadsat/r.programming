@@ -1,14 +1,16 @@
 
-# program that is in compliance with random audit policy;
+# program that is in compliance with random audit policy:
 # ensures employees/cash entities are scheduled so that no two consecutive audits will be conducted
-# on the same month, week, week day, calander day, or the last week 
-# of the last month of a quarter to give the appearance of "randomness"
-# also ensures that no two employees will be audited on the same day
-# constructs monthly audit of vault as well
+# on the same month, week, week day, calander day, around the same day, or the last week 
+# of the last month of a quarter to give the appearance of "randomness".
+# also ensures that no two employees will be audited on the same day.
+# constructs monthly audit of vault as well.
+# if it was up to me, audits would be completely random.
 
+# function call to screw around with 
 audit = function() {
     
-    # date and string editor packages
+    # packages for date and string manipulation
     suppressWarnings(suppressMessages(library(chron)))
     suppressWarnings(suppressMessages(library(Hmisc)))
     suppressWarnings(suppressMessages(library(stringr)))
@@ -49,9 +51,10 @@ audit = function() {
                  tail(dts[months(dts) == 'Jan' & weekdays(dts) == 'Mon'], n = 2)[1], # MLK Day
                  tail(dts[months(dts) == 'May' & weekdays(dts) == 'Mon'], n = 1),    # Memorial Day
                  head(dts[months(dts) == 'Sep' & weekdays(dts) == 'Mon'], n = 1),    # Labor Day
-                 tail(dts[months(dts) == 'Nov' & weekdays(dts) == 'Thu'], n = 1))    # Thanksgiving
+                 tail(dts[months(dts) == 'Nov' & weekdays(dts) == 'Thu'], n = 1)     # Thanksgiving
+                 )    
     
-    # trim Sundays and federal holidays from dates           
+    # trim Sundays and federal holidays from vector of dates          
     workDts = dts[!(weekdays(dts) == 'Sun' | dts %in% holidays)]
     
     # extracts the calander day of a date
@@ -59,7 +62,17 @@ audit = function() {
         as.numeric(format(as.Date(date, '%m/%d/%Y'), '%d'))
         }
     
-    # function that calculates the week number of the month given the first week day of the month given a date
+    # range of dates function
+    dateRange = function(date) {
+        dateR = ifelse(dayNo(date) %in% c(1:9), 1,
+                       ifelse(dayNo(date) %in% c(10:19), 2,
+                              ifelse(dayNo(date) %in% c(20:29), 3, 4)
+                              )
+                       )
+    }
+    
+    # function that calculates the week number of the month 
+    # given the first week day of the month from selected date
     weekNo = function(date) {
         mon = dates(dts[months(dts) == months(date)])
         end = ifelse(weekdays(mon[1]) == 'Sun', 7,
@@ -84,7 +97,7 @@ audit = function() {
                   ))))    
         }
     
-    # function that calculates the number of the month for a quarter given a date
+    # function that supplies the number of the month for a quarter given a date
     monthNo = function(date) {
         month = as.numeric(format(as.Date(date, '%m/%d/%Y'), '%m')
                            )
@@ -108,16 +121,16 @@ audit = function() {
                     quart = quarters(dts)
                     )
     
-    # exclude weekends, federal holidays, 
+    # exclude Sundays, federal holidays, 
     # and the last week of the last month of the quarter from data frame
     df = df[dts %in% workDts,]
     df = df[!(df$month == 3 & df$week == 5),]
     
     # determines if they are employees or entities being scheduled;
-    # skips employee algorithm if only vault is present
+    # skips employee algorithm if only vault is present in name vector
     if ( length(name) > 0 ) {
     
-    #split into quarters
+    # split into quarters
     firstQ = df[df$quart == '1Q',]
     secondQ = df[df$quart == '2Q',]
     thirdQ = df[df$quart == '3Q',]
@@ -132,16 +145,17 @@ audit = function() {
             first = firstQ[sample(nrow(firstQ), 1
                               ),]
         
-            sD = secondQ[!(secondQ$day == first$day 
-                     | secondQ$weekDay == first$weekDay
+            sD = secondQ[!(secondQ$weekDay == first$weekDay
                      | secondQ$week == first$week 
                      | secondQ$month == first$month
+                     | dateRange(secondQ$dts) == dateRange(first$dts)
                        ),]
     
             second = sD[sample(nrow(sD), 1
                            ),]
         
-            thD = thirdQ[!(thirdQ$day %in% c( first$day, second$day )
+            thD = thirdQ[!(thirdQ$day == first$day
+                     | dateRange(thirdQ$dts) == dateRange(second$dts)
                      | thirdQ$weekDay == first$weekDay
                      | thirdQ$weekDay == second$weekDay
                      | thirdQ$week %in% c( first$week, second$week )
@@ -151,7 +165,8 @@ audit = function() {
             third = thD[sample(nrow(thD), 1
                            ),]
         
-            forthD = forthQ[!(forthQ$day %in% c( first$day, second$day, third$day )
+            forthD = forthQ[!(dateRange(forthQ$dts) == dateRange(third$dts)
+                        | forthQ$day %in% c( first$day, second$day, third$day )
                         | forthQ$weekDay == first$weekDay
                         | forthQ$weekDay == second$weekDay
                         | forthQ$weekDay == third$weekDay
@@ -173,6 +188,7 @@ audit = function() {
                         ),]
             
                 sD = secondQ[!(secondQ$day %in% auditSchedule[1:i, 9] 
+                            | secondQ$day == first$day
                             | secondQ$week %in% c( first$week, second$week )
                             | secondQ$weekDay == first$weekDay
                             | secondQ$weekDay == second$weekDay
@@ -183,7 +199,7 @@ audit = function() {
                             ),]
         
             thD = thirdQ[!(thirdQ$day %in% auditSchedule[1:i, 15]
-                        | thirdQ$day %in% c( first$day, second$day )
+                        | dateRange(thirdQ$dts) == dateRange(second$dts)
                         | thirdQ$week %in% c( first$week, second$week )
                         | thirdQ$weekDay == first$weekDay
                         | thirdQ$weekDay == second$weekDay
@@ -194,7 +210,8 @@ audit = function() {
                            ),]
         
             forthD = forthQ[!(forthQ$day %in% auditSchedule[1:i, 21]
-                        | forthQ$day %in% c( first$day, second$day, third$day )
+                        | forthQ$day == first$day
+                        | dateRange(forthQ$dts) %in% dateRange(c(second$dts, third$dts))
                         | forthQ$weekDay == third$weekDay
                         | forthQ$month %in% c( third$month, forth$month )
                         ),]
@@ -214,7 +231,7 @@ audit = function() {
             
             sD = secondQ[!(secondQ$month %in% auditSchedule[(i-2):(i-1), 12]
                          | secondQ$day %in% auditSchedule[1:i, 9] 
-                         | secondQ$day == first$day
+                         | dateRange(secondQ$dts) == dateRange(first$dts)
                          | secondQ$week == first$week 
                          | secondQ$weekDay == first$weekDay 
                        ),]
@@ -224,6 +241,7 @@ audit = function() {
         
             thD = thirdQ[!(thirdQ$day %in% auditSchedule[1:i, 15]
                          | thirdQ$day %in% c( first$day, second$day )
+                         | dateRange(thirdQ$dts) == dateRange(second$dts)
                          | thirdQ$week %in% c( first$week, second$week )
                          | thirdQ$weekDay == second$weekDay
                          | thirdQ$month %in% c( first$month, second$month )
@@ -345,7 +363,7 @@ audit = function() {
                     message('Vault Audits')
                     print(vaultSchedule, row.names = FALSE)
                 
-                    csvFile = input('...Would you like to export the audit schedule to an Excel file (Y/N)?')
+                    csvFile = input('...Would you like to export the vault audit schedule to an Excel file (Y/N)?')
                     cat('\014')
                 
                     if ( csvFile == 'Y' ) {
