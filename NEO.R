@@ -1,5 +1,5 @@
-#lexical scoping exercise: function creates a matrix object
-#that can cache its inverse using gaussian elimination
+## lexical scoping exercise: function creates a matrix object
+## that can cache its inverse using gaussian elimination
 cacheMatrix = function(neo = c()) {
     
     # function to be used to determine if the length of a 
