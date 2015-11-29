@@ -1,5 +1,5 @@
 
-# program that is in compliance with random audit policy:
+# program that is in compliance with random audit policy of a bank:
 # ensures employees/cash entities are scheduled so that no two consecutive audits will be conducted
 # on the same month, week, week day, calander day, around the same day, or the last week 
 # of the last month of a quarter to give the appearance of "randomness".
