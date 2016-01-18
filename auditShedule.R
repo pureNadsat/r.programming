@@ -121,10 +121,8 @@ audit = function() {
                     quart = quarters(dts)
                     )
     
-    # exclude Sundays, federal holidays, 
-    # and the last week of the last month of the quarter from data frame
+    # exclude Sundays and federal holidays, 
     df = df[dts %in% workDts,]
-    df = df[!(df$month == 3 & df$week == 5),]
     
     # determines if they are employees or entities being scheduled;
     # skips employee algorithm if only vault is present in name vector
